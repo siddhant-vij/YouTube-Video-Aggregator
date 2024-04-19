@@ -37,3 +37,9 @@ RSS feeds are a way for websites to publish updates to their content. You can us
 - Add integration tests that use the API to create, read, update, and delete feeds and posts
 - Add bookmarking or "liking" to posts
 - Create a comprehensive web UI that uses the backend API
+
+<br>
+
+### License
+
+Distributed under the MIT License. See [`LICENSE`](https://github.com/siddhant-vij/RSS-Feed-Aggregator/blob/main/LICENSE) for more information.
