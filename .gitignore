@@ -34,3 +34,9 @@ go.work
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+# Project Specific
+.env
+.air.toml
+init_db.json
+tmp/*
