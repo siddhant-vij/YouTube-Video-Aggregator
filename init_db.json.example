@@ -1,0 +1,21 @@
+{
+  "feeds": [
+    {
+      "name": "Feed name",
+      "url": "Feed url",
+      "posts": [
+        {
+          "title": "Post title",
+          "image": {
+            "url": "Image url",
+            "title": "Image alt title"
+          },
+          "authors": "Author names separated by comma",
+          "published_at": "Timestamp of post publish",
+          "description": "Post description",
+          "url": "Post url"
+        }
+      ]
+    }
+  ]
+}
