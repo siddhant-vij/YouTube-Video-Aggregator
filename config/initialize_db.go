@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -49,96 +50,146 @@ func InitializeDB(config *ApiConfig) {
 		feeds = append(feeds, feed)
 	}
 
-	channelParams := createChannelParams(&channelIDs, &feeds)
+	channelParams := createAllChannelParams(&channelIDs, &feeds)
 	insertAllChannels(channelParams, config)
 
-	videoParams := createVideoParams(&channelIDs, &feeds, 5)
-	// -1 for all videos of each channel
+	videoParams := createAllVideoParams(&channelIDs, &feeds, 5)
 	insertAllVideos(videoParams, config)
 }
 
-func createChannelParams(initDb *InitDB, feeds *[]utils.Feed) []database.InsertChannelParams {
-	params := make([]database.InsertChannelParams, 0)
-	for idx, channelID := range initDb.Channels {
-		var parameter = database.InsertChannelParams{
-			ID:        channelID.ChannelID,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			Name:      (*feeds)[idx].Title,
-			Url:       (*feeds)[idx].Link.Href,
+func createAllChannelParams(initDb *InitDB, feeds *[]utils.Feed) []database.InsertChannelParams {
+	wg := &sync.WaitGroup{}
+	ch := make(chan database.InsertChannelParams)
+	var params []database.InsertChannelParams
+
+	go func() {
+		for param := range ch {
+			params = append(params, param)
 		}
-		params = append(params, parameter)
+	}()
+
+	for idx, channelID := range initDb.Channels {
+		wg.Add(1)
+		go createOneChannelParams(&(*feeds)[idx], channelID.ChannelID, wg, ch)
 	}
+
+	wg.Wait()
+	close(ch)
 	return params
+}
+
+func createOneChannelParams(feed *utils.Feed, channelID string, wg *sync.WaitGroup, ch chan<- database.InsertChannelParams) {
+	defer wg.Done()
+	param := database.InsertChannelParams{
+		ID:        channelID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      feed.Title,
+		Url:       feed.Link.Href,
+	}
+	ch <- param
 }
 
 func insertAllChannels(params []database.InsertChannelParams, config *ApiConfig) {
 	wg := &sync.WaitGroup{}
-	for _, insertChannelParam := range params {
+
+	for _, param := range params {
 		wg.Add(1)
-		go insertOneChannel(insertChannelParam, config, wg)
+		go func(p database.InsertChannelParams) {
+			defer wg.Done()
+			insertOneChannel(p, config)
+		}(param)
 	}
+
 	wg.Wait()
 }
 
-func insertOneChannel(insertChannelParam database.InsertChannelParams, config *ApiConfig, wg *sync.WaitGroup) {
+func insertOneChannel(param database.InsertChannelParams, config *ApiConfig) {
 	config.Mutex.Lock()
 	defer config.Mutex.Unlock()
-	defer wg.Done()
-	err := config.DBQueries.InsertChannel(context.TODO(), insertChannelParam)
+	err := config.DBQueries.InsertChannel(context.TODO(), param)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to insert channel: %v", err)
 	}
 }
 
-func createVideoParams(initDb *InitDB, feeds *[]utils.Feed, numVideosPerChannel int) []database.InsertVideoParams {
-	params := make([]database.InsertVideoParams, 0)
+func createAllVideoParams(initDb *InitDB, feeds *[]utils.Feed, numVideosPerChannel int) []database.InsertVideoParams {
+	wg := &sync.WaitGroup{}
+	ch := make(chan database.InsertVideoParams)
+	var params []database.InsertVideoParams
+
+	go func() {
+		for param := range ch {
+			params = append(params, param)
+		}
+	}()
+
+	validCounts := make([]int32, len(initDb.Channels))
+
 	for cidx, channelID := range initDb.Channels {
-		for eidx, entry := range (*feeds)[cidx].Entries {
-			if eidx == numVideosPerChannel {
+		for _, entry := range (*feeds)[cidx].Entries {
+			if atomic.LoadInt32(&validCounts[cidx]) >= int32(numVideosPerChannel) {
 				break
 			}
-			description := string(entry.Media.Description)
-			if description == "" {
-				continue
-			}
-			var parameter = database.InsertVideoParams{
-				ID:          uuid.New(),
-				CreatedAt:   time.Now(),
-				UpdatedAt:   time.Now(),
-				Title:       entry.Title,
-				Description: utils.SummarizeText(description),
-				ImageUrl:    entry.Media.Image.URL,
-				Authors:     entry.Author.Name,
-				PublishedAt: entry.Published,
-				Url:         entry.Link.Href,
-				ViewCount:   utils.ShortenViewCount(entry.Media.Community.Statistics.Views),
-				StarRating:  entry.Media.Community.StarRating.Average,
-				StarCount:   utils.ShortenStarCount(entry.Media.Community.StarRating.Count),
-				ChannelID:   channelID.ChannelID,
-			}
-			params = append(params, parameter)
-			eidx += 1
+			wg.Add(1)
+			go func(entry utils.Entry, channelId string, idx int) {
+				defer wg.Done()
+				param := createOneVideoParam(&entry, channelId)
+				if param != nil {
+					if atomic.AddInt32(&validCounts[idx], 1) <= int32(numVideosPerChannel) {
+						ch <- *param
+					}
+				}
+			}(entry, channelID.ChannelID, cidx)
 		}
 	}
+
+	wg.Wait()
+	close(ch)
 	return params
+}
+
+func createOneVideoParam(entry *utils.Entry, channelID string) *database.InsertVideoParams {
+	description := string(entry.Media.Description)
+	if description == "" {
+		return nil
+	}
+	return &database.InsertVideoParams{
+		ID:          uuid.New(),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		Title:       entry.Title,
+		Description: utils.ShortenText(description),
+		ImageUrl:    entry.Media.Image.URL,
+		Authors:     entry.Author.Name,
+		PublishedAt: entry.Published,
+		Url:         entry.Link.Href,
+		ViewCount:   utils.ShortenViewCount(entry.Media.Community.Statistics.Views),
+		StarRating:  entry.Media.Community.StarRating.Average,
+		StarCount:   utils.ShortenStarCount(entry.Media.Community.StarRating.Count),
+		ChannelID:   channelID,
+	}
 }
 
 func insertAllVideos(params []database.InsertVideoParams, config *ApiConfig) {
 	wg := &sync.WaitGroup{}
-	for _, insertVideoParam := range params {
+
+	for _, param := range params {
 		wg.Add(1)
-		go insertOneVideo(insertVideoParam, config, wg)
+		go func(p database.InsertVideoParams) {
+			defer wg.Done()
+			insertOneVideo(p, config)
+		}(param)
 	}
+
 	wg.Wait()
 }
 
-func insertOneVideo(insertVideoParam database.InsertVideoParams, config *ApiConfig, wg *sync.WaitGroup) {
+func insertOneVideo(param database.InsertVideoParams, config *ApiConfig) {
 	config.Mutex.Lock()
 	defer config.Mutex.Unlock()
-	defer wg.Done()
-	err := config.DBQueries.InsertVideo(context.TODO(), insertVideoParam)
+	err := config.DBQueries.InsertVideo(context.TODO(), param)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to insert video: %v", err)
 	}
 }

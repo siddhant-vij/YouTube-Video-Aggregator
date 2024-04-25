@@ -1,39 +1,56 @@
 package utils
 
-
 import (
-	"context"
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
-	
-	"github.com/tmc/langchaingo/llms"
-	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 // Could've been a great additional logic but it slows down the PC (with llama3 on ollama) - Keeping it here in case summarizing functionality needed for video description.
 // Helps keep consistency in description across all videos.
-func Summarize(text string) string {
-	summaryPrompt := "Your task is to summarize the content provided below within 200 words. Ignore emoticons, emojis and using any starting text like \"This content highlights\" etc. Directly start off with the text summary. Here's the content: " + text
 
-	llm, err := ollama.New(ollama.WithModel("llama3"))
+type SummaryRequest struct {
+	Model   string `json:"model"`
+	Prompt  string `json:"prompt"`
+	Stream  bool   `json:"stream"`
+	Options struct {
+		Temperature float64 `json:"temperature"`
+	} `json:"options"`
+}
+
+func Summarize(text string) string {
+	summaryPrompt := "Your task is to summarize the content provided below within 200 words. Ignore emoticons, emojis and using any starting text like 'This content highlights' etc. Directly start off with the text summary. Here's the content: " + text
+
+	req := SummaryRequest{
+		Model:  "llama3",
+		Prompt: summaryPrompt,
+		Stream: false,
+	}
+	req.Options.Temperature = 0.8
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		log.Fatalf("Error marshaling JSON: %v", err)
+	}
+
+	resp, err := http.Post("http://localhost:11434/api/generate", "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	responseData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
-	completion, err := llms.GenerateFromSinglePrompt(
-		context.TODO(),
-		llm,
-		summaryPrompt,
-		llms.WithTemperature(0.7),
-		llms.WithMinLength(150),
-		llms.WithMaxLength(200),
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return completion
+
+	return string(responseData)
 }
 
 func sanitizeTextByRemovingURLs(text string) string {
@@ -53,7 +70,7 @@ func sanitizeTextByRemovingURLs(text string) string {
 	})
 }
 
-func SummarizeText(text string) string {
+func ShortenText(text string) string {
 	if len(strings.Split(text, " ")) < 20 {
 		return sanitizeTextByRemovingURLs(text) + "..."
 	}
