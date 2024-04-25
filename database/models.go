@@ -38,5 +38,8 @@ type Video struct {
 	Authors     string
 	PublishedAt time.Time
 	Url         string
+	ViewCount   string
+	StarRating  string
+	StarCount   string
 	ChannelID   string
 }

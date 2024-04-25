@@ -47,6 +47,15 @@ type Entry struct {
 		Image       struct {
 			URL string `xml:"url,attr"`
 		} `xml:"thumbnail"`
+		Community struct {
+			StarRating struct {
+				Count   string `xml:"count,attr"`
+				Average string `xml:"average,attr"`
+			} `xml:"starRating"`
+			Statistics struct {
+				Views string `xml:"views,attr"`
+			} `xml:"statistics"`
+		} `xml:"community"`
 	} `xml:"http://search.yahoo.com/mrss/ group"`
 
 	Author struct {

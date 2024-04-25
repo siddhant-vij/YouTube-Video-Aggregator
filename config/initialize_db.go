@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/siddhant-vij/RSS-Feed-Aggregator/database"
 	"github.com/siddhant-vij/RSS-Feed-Aggregator/utils"
 )
@@ -25,13 +26,11 @@ func InitializeDB(config *ApiConfig) {
 	jsonFile, err := os.Open("../init_db.json")
 	if err != nil {
 		log.Fatal(err)
-		os.Exit(1)
 	}
 	reader := json.NewDecoder(jsonFile)
 
 	if err := reader.Decode(&channelIDs); err != nil {
 		log.Fatal(err)
-		os.Exit(1)
 	}
 
 	var feeds []utils.Feed
@@ -53,11 +52,8 @@ func InitializeDB(config *ApiConfig) {
 	channelParams := createChannelParams(&channelIDs, &feeds)
 	insertAllChannels(channelParams, config)
 
-	channelFollowParams := createChannelFollowParams(&channelIDs, uuid.MustParse("25614f84-e0e3-4e48-bd5f-81d3ef36d8d3"))
-	insertAllChannelFollows(channelFollowParams, config)
-
 	videoParams := createVideoParams(&channelIDs, &feeds, 5)
-	// -1 = All Videos for each channel
+	// -1 for all videos of each channel
 	insertAllVideos(videoParams, config)
 }
 
@@ -92,44 +88,12 @@ func insertOneChannel(insertChannelParam database.InsertChannelParams, config *A
 	err := config.DBQueries.InsertChannel(context.TODO(), insertChannelParam)
 	if err != nil {
 		log.Fatal(err)
-		os.Exit(1)
 	}
 }
 
-func createChannelFollowParams(initDb *InitDB, user_id uuid.UUID) []database.InsertChannelFollowParams {
-	params := make([]database.InsertChannelFollowParams, 0)
-	for _, channelID := range initDb.Channels {
-		var parameter = database.InsertChannelFollowParams{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			UserID:    user_id,
-			ChannelID: channelID.ChannelID,
-		}
-		params = append(params, parameter)
-	}
-	return params
-}
-
-func insertAllChannelFollows(params []database.InsertChannelFollowParams, config *ApiConfig) {
-	wg := &sync.WaitGroup{}
-	for _, insertChannelFollowParam := range params {
-		wg.Add(1)
-		go insertOneChannelFollow(insertChannelFollowParam, config, wg)
-	}
-	wg.Wait()
-}
-
-func insertOneChannelFollow(insertChannelFollowParam database.InsertChannelFollowParams, config *ApiConfig, wg *sync.WaitGroup) {
-	config.Mutex.Lock()
-	defer config.Mutex.Unlock()
-	defer wg.Done()
-	err := config.DBQueries.InsertChannelFollow(context.TODO(), insertChannelFollowParam)
-	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
-	}
-}
+// view_count BIGINT NOT NULL,
+// star_rating DECIMAL NOT NULL,
+// star_count VARCHAR(10) NOT NULL,
 
 func createVideoParams(initDb *InitDB, feeds *[]utils.Feed, numVideosPerChannel int) []database.InsertVideoParams {
 	params := make([]database.InsertVideoParams, 0)
@@ -138,16 +102,23 @@ func createVideoParams(initDb *InitDB, feeds *[]utils.Feed, numVideosPerChannel 
 			if eidx == numVideosPerChannel {
 				break
 			}
+			description := string(entry.Media.Description)
+			if description == "" {
+				continue
+			}
 			var parameter = database.InsertVideoParams{
 				ID:          uuid.New(),
 				CreatedAt:   time.Now(),
 				UpdatedAt:   time.Now(),
 				Title:       entry.Title,
-				Description: string(entry.Media.Description),
+				Description: utils.SummarizeText(description),
 				ImageUrl:    entry.Media.Image.URL,
 				Authors:     entry.Author.Name,
 				PublishedAt: entry.Published,
 				Url:         entry.Link.Href,
+				ViewCount:   utils.ShortenViewCount(entry.Media.Community.Statistics.Views),
+				StarRating:  entry.Media.Community.StarRating.Average,
+				StarCount:   utils.ShortenStarCount(entry.Media.Community.StarRating.Count),
 				ChannelID:   channelID.ChannelID,
 			}
 			params = append(params, parameter)
@@ -173,6 +144,5 @@ func insertOneVideo(insertVideoParam database.InsertVideoParams, config *ApiConf
 	err := config.DBQueries.InsertVideo(context.TODO(), insertVideoParam)
 	if err != nil {
 		log.Fatal(err)
-		os.Exit(1)
 	}
 }
