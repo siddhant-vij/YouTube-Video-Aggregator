@@ -1,4 +1,4 @@
-module github.com/siddhant-vij/RSS-Feed-Aggregator
+module github.com/siddhant-vij/YouTube-Video-Aggregator
 
 go 1.22.2
 

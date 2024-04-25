@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/siddhant-vij/RSS-Feed-Aggregator/database"
-	"github.com/siddhant-vij/RSS-Feed-Aggregator/utils"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/database"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/utils"
 )
 
 type InitDB struct {
@@ -90,10 +90,6 @@ func insertOneChannel(insertChannelParam database.InsertChannelParams, config *A
 		log.Fatal(err)
 	}
 }
-
-// view_count BIGINT NOT NULL,
-// star_rating DECIMAL NOT NULL,
-// star_count VARCHAR(10) NOT NULL,
 
 func createVideoParams(initDb *InitDB, feeds *[]utils.Feed, numVideosPerChannel int) []database.InsertVideoParams {
 	params := make([]database.InsertVideoParams, 0)

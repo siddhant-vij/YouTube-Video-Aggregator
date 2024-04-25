@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/siddhant-vij/RSS-Feed-Aggregator/database"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/database"
 )
 
 func ConnectDB(config *ApiConfig) {

@@ -3,7 +3,7 @@ package config
 import (
 	"sync"
 
-	"github.com/siddhant-vij/RSS-Feed-Aggregator/database"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/database"
 )
 
 type ApiConfig struct {

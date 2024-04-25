@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/siddhant-vij/RSS-Feed-Aggregator/middlewares"
-	"github.com/siddhant-vij/RSS-Feed-Aggregator/routes"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/middlewares"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/routes"
 )
 
 func main() {

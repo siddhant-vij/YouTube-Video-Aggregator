@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/siddhant-vij/RSS-Feed-Aggregator/config"
-	"github.com/siddhant-vij/RSS-Feed-Aggregator/database"
-	"github.com/siddhant-vij/RSS-Feed-Aggregator/utils"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/config"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/database"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/utils"
 )
 
 var apiConfig *config.ApiConfig = &config.ApiConfig{}
