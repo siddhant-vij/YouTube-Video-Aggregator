@@ -1,17 +1,16 @@
 -- +goose Up
-CREATE TABLE posts (
+CREATE TABLE videos (
   id UUID PRIMARY KEY,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
   title VARCHAR(255) NOT NULL,
-  image_title VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
   image_url VARCHAR(255) NOT NULL,
   authors VARCHAR(255) NOT NULL,
   published_at TIMESTAMP NOT NULL,
-  description VARCHAR(255) NOT NULL,
   url VARCHAR(255) NOT NULL UNIQUE,
-  feed_id UUID NOT NULL REFERENCES feeds(id) ON DELETE CASCADE
+  channel_id TEXT NOT NULL REFERENCES channels(id) ON DELETE CASCADE
 );
 
 -- +goose Down
-DROP TABLE posts;
+DROP TABLE videos;

@@ -1,6 +1,6 @@
 -- +goose Up
-CREATE TABLE feeds (
-  id UUID PRIMARY KEY,
+CREATE TABLE channels (
+  id TEXT PRIMARY KEY,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
   name VARCHAR(255) NOT NULL,
@@ -9,4 +9,4 @@ CREATE TABLE feeds (
 );
 
 -- +goose Down
-DROP TABLE feeds;
+DROP TABLE channels;

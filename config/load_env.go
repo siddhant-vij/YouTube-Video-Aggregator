@@ -18,5 +18,7 @@ func LoadEnv(config *ApiConfig) {
 	config.AuthServerPort = os.Getenv("AUTH_SERVER_PORT")
 	config.AuthVerifyEndpoint = os.Getenv("AUTH_VERIFY_ENDPOINT")
 
+	config.ChannelBaseURL = os.Getenv("CHANNEL_BASE_URL")
+
 	config.ResourceServerPort = os.Getenv("RESOURCE_SERVER_PORT")
 }

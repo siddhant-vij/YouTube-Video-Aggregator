@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 )
 
-type Feed struct {
-	ID            uuid.UUID
+type Channel struct {
+	ID            string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	Name          string
@@ -20,24 +20,23 @@ type Feed struct {
 	LastFetchedAt sql.NullTime
 }
 
-type FeedFollow struct {
+type ChannelFollow struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	UserID    uuid.UUID
-	FeedID    uuid.UUID
+	ChannelID string
 }
 
-type Post struct {
+type Video struct {
 	ID          uuid.UUID
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	Title       string
-	ImageTitle  string
+	Description string
 	ImageUrl    string
 	Authors     string
 	PublishedAt time.Time
-	Description string
 	Url         string
-	FeedID      uuid.UUID
+	ChannelID   string
 }

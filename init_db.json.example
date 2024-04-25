@@ -1,21 +1,16 @@
 {
-  "feeds": [
+  "channels": [
     {
-      "name": "Feed name",
-      "url": "Feed url",
-      "posts": [
-        {
-          "title": "Post title",
-          "image": {
-            "url": "Image url",
-            "title": "Image alt title"
-          },
-          "authors": "Author names separated by comma",
-          "published_at": "Timestamp of post publish",
-          "description": "Post description",
-          "url": "Post url"
-        }
-      ]
+      "channelId": "YouTube Channel ID"
     }
   ]
 }
+
+Here's how to obtain the YouTube Channel ID:
+- Open the YouTube channel in Chrome
+- Ctrl + Shift + I
+- Open "Console" and type the following command in the console:
+  console.log(ytInitialData.metadata.channelMetadataRenderer.externalId)
+- The result will be something like "UCBJycsmduvYEL83R_U4JriQ" for Marques Brownlee.
+
+*** This works as of April end, 2024.

@@ -28,32 +28,32 @@ func GetDataFromDB(w http.ResponseWriter, r *http.Request) {
 	apiConfig.Mutex.RLock()
 	defer apiConfig.Mutex.RUnlock()
 
-	feed, err := apiConfig.DBQueries.GetAllFeeds(context.TODO())
+	channels, err := apiConfig.DBQueries.GetAllChannels(context.TODO())
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	feedFollows, err := apiConfig.DBQueries.GetAllFeedFollows(context.TODO())
+	channelFollows, err := apiConfig.DBQueries.GetAllChannelFollows(context.TODO())
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	posts, err := apiConfig.DBQueries.GetAllPosts(context.TODO())
+	videos, err := apiConfig.DBQueries.GetAllVideos(context.TODO())
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	var response struct {
-		Feeds       []database.Feed
-		FeedFollows []database.FeedFollow
-		Posts       []database.Post
+		Channels       []database.Channel
+		ChannelFollows []database.ChannelFollow
+		Videos         []database.Video
 	}
-	response.Feeds = feed
-	response.FeedFollows = feedFollows
-	response.Posts = posts
+	response.Channels = channels
+	response.ChannelFollows = channelFollows
+	response.Videos = videos
 	utils.RespondWithJSON(w, http.StatusOK, response)
 }
 

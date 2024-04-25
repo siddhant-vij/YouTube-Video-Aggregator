@@ -14,6 +14,8 @@ type ApiConfig struct {
 
 	ResourceServerPort string
 
+	ChannelBaseURL string
+
 	DBQueries *database.Queries
 	Mutex     *sync.RWMutex
 }

@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"sort"
 	"time"
 )
 
 type YouTubeFeedInputParams struct {
-	Client          *http.Client
-	ChannelBaseURL  string
-	PlaylistBaseURL string
+	Client         *http.Client
+	ChannelBaseURL string
 }
 
 type Type string
@@ -66,13 +66,11 @@ func (yt *YouTubeFeedInputParams) url(id string, feedType Type) (string, error) 
 	switch feedType {
 	case FTChannel, FTDefault:
 		return yt.ChannelBaseURL + id, nil
-	case FTPlaylist:
-		return yt.PlaylistBaseURL + id, nil
 	}
 	return "", errors.New("unknown feed type")
 }
 
-func (yt *YouTubeFeedInputParams) GetFeedPosts(id string, feedType Type) (Feed, error) {
+func (yt *YouTubeFeedInputParams) GetFeed(id string, feedType Type) (Feed, error) {
 	url, err := yt.url(id, feedType)
 	if err != nil {
 		return Feed{}, err
@@ -99,9 +97,9 @@ func (yt *YouTubeFeedInputParams) GetFeedPosts(id string, feedType Type) (Feed, 
 			return Feed{}, err
 		}
 
-		// sort.Slice(feed.Entries, func(i, j int) bool {
-		// 	return feed.Entries[i].Published.After(feed.Entries[j].Published)
-		// })
+		sort.Slice(feed.Entries, func(i, j int) bool {
+			return feed.Entries[i].Published.After(feed.Entries[j].Published)
+		})
 
 		return feed, nil
 	}
