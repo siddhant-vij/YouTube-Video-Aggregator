@@ -1,18 +1,18 @@
-## RSS Feed Aggregator
+## YouTube Video Aggregator
 
 Building an aggregator service in Go. It's a backend web server which allows a user to:
-- Follow 5 RSS feeds by default (on successful login)
-- Follow and unfollow RSS feeds that other users have added
-- Fetch all of the latest posts from the RSS feeds they follow
+- Follow 5 YouTube channels by default (on successful login)
+- Follow and unfollow channels that other users have added
+- Fetch all of the latest videos from the channels they follow
 
 <br>
 
 - [JWT Authentication Service](https://github.com/siddhant-vij/JWT-Authentication-Service) to securely login users on the website.
-- [Dynamic Blog Generator](https://github.com/siddhant-vij/Dynamic-Blog-Generator) using Go's template engine to display the RSS feed posts.
+- [Dynamic Feed Generator](https://github.com/siddhant-vij/Dynamic-Feed-Generator) using Go's template engine to display the videos.
 
 <br>
 
-RSS feeds are a way for websites to publish updates to their content. You can use this project to keep up with your favorite blogs, news sites, podcasts, and more!
+RSS/Atom feeds are a way for websites to publish updates to their content. You can use this project to keep up with your favorite youtube channels!
 
 [Boot.dev](https://www.boot.dev/learn/build-blog-aggregator) Guided Project
 
@@ -23,7 +23,7 @@ RSS feeds are a way for websites to publish updates to their content. You can us
 - The basics of database migrations
 - Long-running service workers
 - The complete overview of JWT authentication
-- Dynamic blog generator using the backend API
+- Dynamic feed generator using the backend API
 
 <br>
 
@@ -42,4 +42,4 @@ RSS feeds are a way for websites to publish updates to their content. You can us
 
 ### License
 
-Distributed under the MIT License. See [`LICENSE`](https://github.com/siddhant-vij/RSS-Feed-Aggregator/blob/main/LICENSE) for more information.
+Distributed under the MIT License. See [`LICENSE`](https://github.com/siddhant-vij/YouTube-Video-Aggregator/blob/main/LICENSE) for more information.
