@@ -29,6 +29,11 @@ func executeFetchCronJob() {
 	<-gocron.Start()
 }
 
+func executeDeleteCronJob() {
+	gocron.Every(1).Week().Do(controllers.DeleteOldVideos, apiConfig)
+	<-gocron.Start()
+}
+
 func RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/", GenerateReponse)
 	mux.HandleFunc("/refresh", GenerateReponse)
@@ -37,4 +42,5 @@ func RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/addNewChannel/{channel_id}", AddNewChannel)
 
 	go executeFetchCronJob()
+	go executeDeleteCronJob()
 }

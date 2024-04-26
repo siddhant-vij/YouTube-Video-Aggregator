@@ -12,6 +12,16 @@ import (
 	"github.com/google/uuid"
 )
 
+const deleteOldVideos = `-- name: DeleteOldVideos :exec
+DELETE FROM videos
+WHERE published_at < (CURRENT_DATE - interval '1 month')
+`
+
+func (q *Queries) DeleteOldVideos(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteOldVideos)
+	return err
+}
+
 const getAllVideos = `-- name: GetAllVideos :many
 SELECT id, created_at, updated_at, title, description, image_url, authors, published_at, url, view_count, star_rating, star_count, channel_id FROM videos
 `

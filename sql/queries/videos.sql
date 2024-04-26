@@ -22,3 +22,7 @@ SET
   star_rating = $3,
   star_count = $4
 WHERE url = $1;
+
+-- name: DeleteOldVideos :exec
+DELETE FROM videos
+WHERE published_at < (CURRENT_DATE - interval '1 month');
