@@ -83,11 +83,12 @@ func createAllChannelParams(initDb *InitDB, feeds *[]utils.Feed) []database.Inse
 func createOneChannelParams(feed *utils.Feed, channelID string, wg *sync.WaitGroup, ch chan<- database.InsertChannelParams) {
 	defer wg.Done()
 	param := database.InsertChannelParams{
-		ID:        channelID,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Name:      feed.Title,
-		Url:       feed.Link.Href,
+		ID:            channelID,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+		Name:          feed.Title,
+		Url:           feed.Link.Href,
+		LastFetchedAt: time.Now(),
 	}
 	ch <- param
 }
@@ -190,7 +191,6 @@ func insertOneVideo(param database.InsertVideoParams, config *ApiConfig) {
 	defer config.Mutex.Unlock()
 	err := config.DBQueries.InsertVideo(context.TODO(), param)
 	if err != nil {
-		log.Println("Video details:", param)
 		log.Fatalf("Failed to insert video: %v", err)
 	}
 }

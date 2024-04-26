@@ -5,7 +5,6 @@
 package database
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,7 +16,7 @@ type Channel struct {
 	UpdatedAt     time.Time
 	Name          string
 	Url           string
-	LastFetchedAt sql.NullTime
+	LastFetchedAt time.Time
 }
 
 type ChannelFollow struct {

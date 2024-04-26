@@ -7,6 +7,10 @@ VALUES
 -- name: GetAllChannelFollows :many
 SELECT * FROM channel_follows;
 
+-- name: GetChannelFollowsForUser :many
+SELECT * FROM channel_follows
+WHERE user_id = $1;
+
 -- name: GetUserFollowedChannels :many
 SELECT channels.*
 FROM channel_follows
@@ -21,3 +25,7 @@ WHERE id NOT IN (
   FROM channel_follows
   WHERE user_id = $1
 );
+
+-- name: DeleteChannelFollow :exec
+DELETE FROM channel_follows
+WHERE user_id = $1 AND channel_id = $2;

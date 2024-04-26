@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"time"
 )
 
@@ -45,14 +44,14 @@ func (q *Queries) GetAllChannels(ctx context.Context) ([]Channel, error) {
 	return items, nil
 }
 
-const getFiveChannels = `-- name: GetFiveChannels :many
+const getNumChannelsByCreatedAt = `-- name: GetNumChannelsByCreatedAt :many
 SELECT id, created_at, updated_at, name, url, last_fetched_at FROM channels
 ORDER BY created_at DESC
-LIMIT 5
+LIMIT $1
 `
 
-func (q *Queries) GetFiveChannels(ctx context.Context) ([]Channel, error) {
-	rows, err := q.db.QueryContext(ctx, getFiveChannels)
+func (q *Queries) GetNumChannelsByCreatedAt(ctx context.Context, limit int32) ([]Channel, error) {
+	rows, err := q.db.QueryContext(ctx, getNumChannelsByCreatedAt, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -83,17 +82,18 @@ func (q *Queries) GetFiveChannels(ctx context.Context) ([]Channel, error) {
 
 const insertChannel = `-- name: InsertChannel :exec
 INSERT INTO channels
-  (id, created_at, updated_at, name, url)
+  (id, created_at, updated_at, name, url, last_fetched_at)
 VALUES
-  ($1, $2, $3, $4, $5)
+  ($1, $2, $3, $4, $5, $6)
 `
 
 type InsertChannelParams struct {
-	ID        string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Name      string
-	Url       string
+	ID            string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	Name          string
+	Url           string
+	LastFetchedAt time.Time
 }
 
 func (q *Queries) InsertChannel(ctx context.Context, arg InsertChannelParams) error {
@@ -103,6 +103,7 @@ func (q *Queries) InsertChannel(ctx context.Context, arg InsertChannelParams) er
 		arg.UpdatedAt,
 		arg.Name,
 		arg.Url,
+		arg.LastFetchedAt,
 	)
 	return err
 }
@@ -110,13 +111,14 @@ func (q *Queries) InsertChannel(ctx context.Context, arg InsertChannelParams) er
 const updateLastFetchedAt = `-- name: UpdateLastFetchedAt :exec
 UPDATE channels
 SET
-  last_fetched_at = $2
+  last_fetched_at = $2,
+  updated_at = $2
 WHERE id = $1
 `
 
 type UpdateLastFetchedAtParams struct {
 	ID            string
-	LastFetchedAt sql.NullTime
+	LastFetchedAt time.Time
 }
 
 func (q *Queries) UpdateLastFetchedAt(ctx context.Context, arg UpdateLastFetchedAtParams) error {
