@@ -6,3 +6,18 @@ VALUES
 
 -- name: GetAllChannelFollows :many
 SELECT * FROM channel_follows;
+
+-- name: GetUserFollowedChannels :many
+SELECT channels.*
+FROM channel_follows
+JOIN channels
+ON channel_follows.channel_id = channels.id
+WHERE channel_follows.user_id = $1;
+
+-- name: GetOtherChannelsForUser :many
+SELECT * FROM channels
+WHERE id NOT IN (
+  SELECT channel_id
+  FROM channel_follows
+  WHERE user_id = $1
+);

@@ -6,3 +6,11 @@ VALUES
 
 -- name: GetAllVideos :many
 SELECT * FROM videos;
+
+-- name: GetUserVideos :many
+SELECT videos.* FROM videos
+JOIN channel_follows
+ON videos.channel_id = channel_follows.channel_id
+WHERE channel_follows.user_id = $1
+ORDER BY videos.published_at DESC
+LIMIT $2;

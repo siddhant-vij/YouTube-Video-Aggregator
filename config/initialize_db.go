@@ -55,6 +55,8 @@ func InitializeDB(config *ApiConfig) {
 
 	videoParams := createAllVideoParams(&channelIDs, &feeds, 5)
 	insertAllVideos(videoParams, config)
+
+	log.Println("Database Initialized!")
 }
 
 func createAllChannelParams(initDb *InitDB, feeds *[]utils.Feed) []database.InsertChannelParams {
@@ -95,18 +97,16 @@ func insertAllChannels(params []database.InsertChannelParams, config *ApiConfig)
 
 	for _, param := range params {
 		wg.Add(1)
-		go func(p database.InsertChannelParams) {
-			defer wg.Done()
-			insertOneChannel(p, config)
-		}(param)
+		go insertOneChannel(param, config, wg)
 	}
 
 	wg.Wait()
 }
 
-func insertOneChannel(param database.InsertChannelParams, config *ApiConfig) {
+func insertOneChannel(param database.InsertChannelParams, config *ApiConfig, wg *sync.WaitGroup) {
 	config.Mutex.Lock()
 	defer config.Mutex.Unlock()
+	defer wg.Done()
 	err := config.DBQueries.InsertChannel(context.TODO(), param)
 	if err != nil {
 		log.Fatalf("Failed to insert channel: %v", err)
@@ -190,6 +190,7 @@ func insertOneVideo(param database.InsertVideoParams, config *ApiConfig) {
 	defer config.Mutex.Unlock()
 	err := config.DBQueries.InsertVideo(context.TODO(), param)
 	if err != nil {
+		log.Println("Video details:", param)
 		log.Fatalf("Failed to insert video: %v", err)
 	}
 }

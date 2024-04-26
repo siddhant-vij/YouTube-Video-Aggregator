@@ -7,6 +7,11 @@ VALUES
 -- name: GetAllChannels :many
 SELECT * FROM channels;
 
+-- name: GetFiveChannels :many
+SELECT * FROM channels
+ORDER BY created_at DESC
+LIMIT 5;
+
 -- name: UpdateLastFetchedAt :exec
 UPDATE channels
 SET

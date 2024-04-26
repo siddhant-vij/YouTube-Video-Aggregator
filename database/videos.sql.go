@@ -53,6 +53,57 @@ func (q *Queries) GetAllVideos(ctx context.Context) ([]Video, error) {
 	return items, nil
 }
 
+const getUserVideos = `-- name: GetUserVideos :many
+SELECT videos.id, videos.created_at, videos.updated_at, videos.title, videos.description, videos.image_url, videos.authors, videos.published_at, videos.url, videos.view_count, videos.star_rating, videos.star_count, videos.channel_id FROM videos
+JOIN channel_follows
+ON videos.channel_id = channel_follows.channel_id
+WHERE channel_follows.user_id = $1
+ORDER BY videos.published_at DESC
+LIMIT $2
+`
+
+type GetUserVideosParams struct {
+	UserID uuid.UUID
+	Limit  int32
+}
+
+func (q *Queries) GetUserVideos(ctx context.Context, arg GetUserVideosParams) ([]Video, error) {
+	rows, err := q.db.QueryContext(ctx, getUserVideos, arg.UserID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Video
+	for rows.Next() {
+		var i Video
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Title,
+			&i.Description,
+			&i.ImageUrl,
+			&i.Authors,
+			&i.PublishedAt,
+			&i.Url,
+			&i.ViewCount,
+			&i.StarRating,
+			&i.StarCount,
+			&i.ChannelID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertVideo = `-- name: InsertVideo :exec
 INSERT INTO videos
   (id, created_at, updated_at, title, description, image_url, authors, published_at, url, view_count, star_rating, star_count, channel_id)

@@ -45,6 +45,83 @@ func (q *Queries) GetAllChannelFollows(ctx context.Context) ([]ChannelFollow, er
 	return items, nil
 }
 
+const getOtherChannelsForUser = `-- name: GetOtherChannelsForUser :many
+SELECT id, created_at, updated_at, name, url, last_fetched_at FROM channels
+WHERE id NOT IN (
+  SELECT channel_id
+  FROM channel_follows
+  WHERE user_id = $1
+)
+`
+
+func (q *Queries) GetOtherChannelsForUser(ctx context.Context, userID uuid.UUID) ([]Channel, error) {
+	rows, err := q.db.QueryContext(ctx, getOtherChannelsForUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Channel
+	for rows.Next() {
+		var i Channel
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Url,
+			&i.LastFetchedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserFollowedChannels = `-- name: GetUserFollowedChannels :many
+SELECT channels.id, channels.created_at, channels.updated_at, channels.name, channels.url, channels.last_fetched_at
+FROM channel_follows
+JOIN channels
+ON channel_follows.channel_id = channels.id
+WHERE channel_follows.user_id = $1
+`
+
+func (q *Queries) GetUserFollowedChannels(ctx context.Context, userID uuid.UUID) ([]Channel, error) {
+	rows, err := q.db.QueryContext(ctx, getUserFollowedChannels, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Channel
+	for rows.Next() {
+		var i Channel
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Url,
+			&i.LastFetchedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertChannelFollow = `-- name: InsertChannelFollow :exec
 INSERT INTO channel_follows
   (id, created_at, updated_at, user_id, channel_id)
