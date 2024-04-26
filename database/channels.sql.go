@@ -80,6 +80,42 @@ func (q *Queries) GetNumChannelsByCreatedAt(ctx context.Context, limit int32) ([
 	return items, nil
 }
 
+const getNumChannelsToFetch = `-- name: GetNumChannelsToFetch :many
+SELECT id, created_at, updated_at, name, url, last_fetched_at FROM channels
+ORDER BY last_fetched_at ASC NULLS FIRST
+LIMIT $1
+`
+
+func (q *Queries) GetNumChannelsToFetch(ctx context.Context, limit int32) ([]Channel, error) {
+	rows, err := q.db.QueryContext(ctx, getNumChannelsToFetch, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Channel
+	for rows.Next() {
+		var i Channel
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Url,
+			&i.LastFetchedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertChannel = `-- name: InsertChannel :exec
 INSERT INTO channels
   (id, created_at, updated_at, name, url, last_fetched_at)

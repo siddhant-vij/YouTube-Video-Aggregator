@@ -12,6 +12,11 @@ SELECT * FROM channels
 ORDER BY created_at DESC
 LIMIT $1;
 
+-- name: GetNumChannelsToFetch :many
+SELECT * FROM channels
+ORDER BY last_fetched_at ASC NULLS FIRST
+LIMIT $1;
+
 -- name: UpdateLastFetchedAt :exec
 UPDATE channels
 SET

@@ -14,3 +14,11 @@ ON videos.channel_id = channel_follows.channel_id
 WHERE channel_follows.user_id = $1
 ORDER BY videos.published_at DESC
 LIMIT $2;
+
+-- name: UpdateStatsForURL :exec
+UPDATE videos
+SET
+  view_count = $2,
+  star_rating = $3,
+  star_count = $4
+WHERE url = $1;

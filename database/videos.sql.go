@@ -145,3 +145,29 @@ func (q *Queries) InsertVideo(ctx context.Context, arg InsertVideoParams) error 
 	)
 	return err
 }
+
+const updateStatsForURL = `-- name: UpdateStatsForURL :exec
+UPDATE videos
+SET
+  view_count = $2,
+  star_rating = $3,
+  star_count = $4
+WHERE url = $1
+`
+
+type UpdateStatsForURLParams struct {
+	Url        string
+	ViewCount  string
+	StarRating string
+	StarCount  string
+}
+
+func (q *Queries) UpdateStatsForURL(ctx context.Context, arg UpdateStatsForURLParams) error {
+	_, err := q.db.ExecContext(ctx, updateStatsForURL,
+		arg.Url,
+		arg.ViewCount,
+		arg.StarRating,
+		arg.StarCount,
+	)
+	return err
+}
