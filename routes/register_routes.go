@@ -8,6 +8,7 @@ import (
 
 	"github.com/siddhant-vij/YouTube-Video-Aggregator/config"
 	"github.com/siddhant-vij/YouTube-Video-Aggregator/controllers"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/middlewares"
 )
 
 var apiConfig *config.ApiConfig = &config.ApiConfig{}
@@ -35,12 +36,16 @@ func executeDeleteCronJob() {
 }
 
 func RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/", GenerateReponse)
-	mux.HandleFunc("/refresh", GenerateReponse)
-	mux.HandleFunc("/follow/{channel_id}", FollowChannel)
-	mux.HandleFunc("/unfollow/{channel_id}", UnfollowChannel)
-	mux.HandleFunc("/addNewChannel/{channel_id}", AddNewChannel)
-
 	go executeFetchCronJob()
 	go executeDeleteCronJob()
+
+	mux.Handle("/", middlewares.AuthMiddleware(http.HandlerFunc(GenerateReponse), apiConfig))
+
+	mux.Handle("/refresh", middlewares.AuthMiddleware(http.HandlerFunc(GenerateReponse), apiConfig))
+
+	mux.Handle("/follow/{channel_id}", middlewares.AuthMiddleware(http.HandlerFunc(FollowChannel), apiConfig))
+
+	mux.Handle("/unfollow/{channel_id}", middlewares.AuthMiddleware(http.HandlerFunc(UnfollowChannel), apiConfig))
+
+	mux.Handle("/addNewChannel/{channel_id}", middlewares.AuthMiddleware(http.HandlerFunc(AddNewChannel), apiConfig))
 }

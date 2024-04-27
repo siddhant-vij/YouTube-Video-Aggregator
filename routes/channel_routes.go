@@ -3,15 +3,12 @@ package routes
 import (
 	"net/http"
 
-	"github.com/google/uuid"
-
-	"github.com/siddhant-vij/YouTube-Video-Aggregator/utils"
 	"github.com/siddhant-vij/YouTube-Video-Aggregator/controllers"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/utils"
 )
 
 func FollowChannel(w http.ResponseWriter, r *http.Request) {
-	userId := uuid.MustParse("78b7b1d4-bc92-4488-9531-7d805e689feb")
-	// Generated from Auth Service - Will integrate soon
+	userId := apiConfig.UserId
 
 	channelId := r.PathValue("channel_id")
 	err := controllers.AddChannelFollowForUser(apiConfig, userId, channelId)
@@ -29,8 +26,7 @@ func FollowChannel(w http.ResponseWriter, r *http.Request) {
 }
 
 func UnfollowChannel(w http.ResponseWriter, r *http.Request) {
-	userId := uuid.MustParse("78b7b1d4-bc92-4488-9531-7d805e689feb")
-	// Generated from Auth Service - Will integrate soon
+	userId := apiConfig.UserId
 
 	channelId := r.PathValue("channel_id")
 	err := controllers.RemoveChannelFollowForUser(apiConfig, userId, channelId)
@@ -48,8 +44,7 @@ func UnfollowChannel(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddNewChannel(w http.ResponseWriter, r *http.Request) {
-	userId := uuid.MustParse("78b7b1d4-bc92-4488-9531-7d805e689feb")
-	// Generated from Auth Service - Will integrate soon
+	userId := apiConfig.UserId
 
 	channelId := r.PathValue("channel_id")
 	err := controllers.AddChannelAndVideos(apiConfig, channelId)
