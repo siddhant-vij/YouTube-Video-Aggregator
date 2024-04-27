@@ -63,6 +63,25 @@ func (q *Queries) GetAllVideos(ctx context.Context) ([]Video, error) {
 	return items, nil
 }
 
+const getStatsForURL = `-- name: GetStatsForURL :one
+SELECT view_count, star_rating, star_count
+FROM videos
+WHERE url = $1
+`
+
+type GetStatsForURLRow struct {
+	ViewCount  string
+	StarRating string
+	StarCount  string
+}
+
+func (q *Queries) GetStatsForURL(ctx context.Context, url string) (GetStatsForURLRow, error) {
+	row := q.db.QueryRowContext(ctx, getStatsForURL, url)
+	var i GetStatsForURLRow
+	err := row.Scan(&i.ViewCount, &i.StarRating, &i.StarCount)
+	return i, err
+}
+
 const getUserVideos = `-- name: GetUserVideos :many
 SELECT videos.id, videos.created_at, videos.updated_at, videos.title, videos.description, videos.image_url, videos.authors, videos.published_at, videos.url, videos.view_count, videos.star_rating, videos.star_count, videos.channel_id FROM videos
 JOIN channel_follows

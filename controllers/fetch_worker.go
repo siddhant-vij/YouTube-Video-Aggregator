@@ -134,12 +134,28 @@ func insertOneVideo(param database.InsertVideoParams, config *config.ApiConfig, 
 	err := config.DBQueries.InsertVideo(context.TODO(), param)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-			updateStats(param, config)
-			// Will always update the DB even if there's no actual update in value. ***PERFORMANCE HIT. Will think about this on scale. 
+			if isUpdatable(param, config) {
+				updateStats(param, config)
+			}
 		} else {
 			log.Fatalf("Failed to insert video: %v", err)
 		}
 	}
+}
+
+func isUpdatable(param database.InsertVideoParams, config *config.ApiConfig) bool {
+	vc, sr, sc := getStats(param.Url, config)
+	return param.ViewCount != vc ||
+		param.StarRating != sr ||
+		param.StarCount != sc
+}
+
+func getStats(url string, config *config.ApiConfig) (viewCount string, starRating string, starCount string) {
+	getResponseRow, err := config.DBQueries.GetStatsForURL(context.TODO(), url)
+	if err != nil {
+		log.Fatalf("Failed to get video stats: %v", err)
+	}
+	return getResponseRow.ViewCount, getResponseRow.StarRating, getResponseRow.StarCount
 }
 
 func updateStats(param database.InsertVideoParams, config *config.ApiConfig) {

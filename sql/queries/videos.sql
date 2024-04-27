@@ -15,6 +15,11 @@ WHERE channel_follows.user_id = $1
 ORDER BY videos.published_at DESC
 LIMIT $2;
 
+-- name: GetStatsForURL :one
+SELECT view_count, star_rating, star_count
+FROM videos
+WHERE url = $1;
+
 -- name: UpdateStatsForURL :exec
 UPDATE videos
 SET
