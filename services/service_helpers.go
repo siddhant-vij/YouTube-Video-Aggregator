@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -50,7 +51,16 @@ func init() {
 }
 
 func isYouTubeFeedServerWorking() bool {
-	return false
+	client := &http.Client{}
+	url := "https://www.youtube.com/feeds/videos.xml?channel_id=UCBR8-60-B28hp2BmDPdntcQ"
+	// YouTube's Official Channel - it's that simple?
+	resp, err := client.Get(url)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+
+	return resp.StatusCode == 200
 }
 
 func GetChannelVideos(channelID string) (Channel, error) {
