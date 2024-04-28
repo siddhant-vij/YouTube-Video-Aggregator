@@ -28,6 +28,9 @@ func FetchNewVideos(config *config.ApiConfig) {
 	for _, channel := range channelsToFetch {
 		channel, err := services.GetChannelVideos(channel.ID)
 		if err != nil {
+			if strings.Contains(err.Error(), "no fetching error") {
+				return
+			}
 			panic(err)
 		}
 
