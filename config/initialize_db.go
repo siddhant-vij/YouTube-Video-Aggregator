@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"net/http"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -13,7 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/siddhant-vij/YouTube-Video-Aggregator/database"
-	"github.com/siddhant-vij/YouTube-Video-Aggregator/utils"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/services"
 )
 
 type InitDB struct {
@@ -34,32 +33,27 @@ func InitializeDB(config *ApiConfig) {
 		log.Fatal(err)
 	}
 
-	var feeds []utils.Feed
+	var channels []services.Channel
 
 	for _, channelID := range channelIDs.Channels {
-		var ytFeedInputParams = utils.YouTubeFeedInputParams{
-			Client:         &http.Client{},
-			ChannelBaseURL: config.ChannelBaseURL,
-		}
-
-		feed, err := ytFeedInputParams.GetFeed(channelID.ChannelID, utils.FTChannel)
+		channel, err := services.GetChannelVideos(channelID.ChannelID)
 		if err != nil {
 			panic(err)
 		}
 
-		feeds = append(feeds, feed)
+		channels = append(channels, channel)
 	}
 
-	channelParams := createAllChannelParams(&channelIDs, &feeds)
+	channelParams := createAllChannelParams(&channelIDs, &channels)
 	insertAllChannels(channelParams, config)
 
-	videoParams := createAllVideoParams(&channelIDs, &feeds, 5)
+	videoParams := createAllVideoParams(&channelIDs, &channels, 5)
 	insertAllVideos(videoParams, config)
 
 	log.Println("Database Initialized!")
 }
 
-func createAllChannelParams(initDb *InitDB, feeds *[]utils.Feed) []database.InsertChannelParams {
+func createAllChannelParams(initDb *InitDB, channels *[]services.Channel) []database.InsertChannelParams {
 	wg := &sync.WaitGroup{}
 	ch := make(chan database.InsertChannelParams)
 	var params []database.InsertChannelParams
@@ -72,7 +66,7 @@ func createAllChannelParams(initDb *InitDB, feeds *[]utils.Feed) []database.Inse
 
 	for idx, channelID := range initDb.Channels {
 		wg.Add(1)
-		go createOneChannelParams(&(*feeds)[idx], channelID.ChannelID, wg, ch)
+		go createOneChannelParams(&(*channels)[idx], channelID.ChannelID, wg, ch)
 	}
 
 	wg.Wait()
@@ -80,14 +74,14 @@ func createAllChannelParams(initDb *InitDB, feeds *[]utils.Feed) []database.Inse
 	return params
 }
 
-func createOneChannelParams(feed *utils.Feed, channelID string, wg *sync.WaitGroup, ch chan<- database.InsertChannelParams) {
+func createOneChannelParams(channel *services.Channel, channelID string, wg *sync.WaitGroup, ch chan<- database.InsertChannelParams) {
 	defer wg.Done()
 	param := database.InsertChannelParams{
 		ID:            channelID,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
-		Name:          feed.Title,
-		Url:           feed.Link.Href,
+		Name:          channel.Name,
+		Url:           channel.URL,
 		LastFetchedAt: time.Now(),
 	}
 	ch <- param
@@ -114,7 +108,7 @@ func insertOneChannel(param database.InsertChannelParams, config *ApiConfig, wg 
 	}
 }
 
-func createAllVideoParams(initDb *InitDB, feeds *[]utils.Feed, numVideosPerChannel int) []database.InsertVideoParams {
+func createAllVideoParams(initDb *InitDB, channels *[]services.Channel, numVideosPerChannel int) []database.InsertVideoParams {
 	wg := &sync.WaitGroup{}
 	ch := make(chan database.InsertVideoParams)
 	var params []database.InsertVideoParams
@@ -128,20 +122,20 @@ func createAllVideoParams(initDb *InitDB, feeds *[]utils.Feed, numVideosPerChann
 	validCounts := make([]int32, len(initDb.Channels))
 
 	for cidx, channelID := range initDb.Channels {
-		for _, entry := range (*feeds)[cidx].Entries {
+		for _, video := range (*channels)[cidx].Videos {
 			if atomic.LoadInt32(&validCounts[cidx]) >= int32(numVideosPerChannel) {
 				break
 			}
 			wg.Add(1)
-			go func(entry utils.Entry, channelId string, idx int) {
+			go func(video services.Video, channelId string, idx int) {
 				defer wg.Done()
-				param := createOneVideoParam(&entry, channelId)
+				param := createOneVideoParam(&video, channelId)
 				if param != nil {
 					if atomic.AddInt32(&validCounts[idx], 1) <= int32(numVideosPerChannel) {
 						ch <- *param
 					}
 				}
-			}(entry, channelID.ChannelID, cidx)
+			}(video, channelID.ChannelID, cidx)
 		}
 	}
 
@@ -150,24 +144,23 @@ func createAllVideoParams(initDb *InitDB, feeds *[]utils.Feed, numVideosPerChann
 	return params
 }
 
-func createOneVideoParam(entry *utils.Entry, channelID string) *database.InsertVideoParams {
-	description := string(entry.Media.Description)
-	if description == "" {
+func createOneVideoParam(video *services.Video, channelID string) *database.InsertVideoParams {
+	if video.Description == "..." || video.Description == "" {
 		return nil
 	}
 	return &database.InsertVideoParams{
 		ID:          uuid.New(),
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
-		Title:       entry.Title,
-		Description: utils.ShortenText(description),
-		ImageUrl:    entry.Media.Image.URL,
-		Authors:     entry.Author.Name,
-		PublishedAt: entry.Published,
-		Url:         entry.Link.Href,
-		ViewCount:   utils.ShortenViewCount(entry.Media.Community.Statistics.Views),
-		StarRating:  entry.Media.Community.StarRating.Average,
-		StarCount:   utils.ShortenStarCount(entry.Media.Community.StarRating.Count),
+		Title:       video.Title,
+		Description: video.Description,
+		ImageUrl:    video.ImageURL,
+		Authors:     video.Authors,
+		PublishedAt: video.PublishedAt,
+		Url:         video.URL,
+		ViewCount:   video.ViewCount,
+		StarRating:  video.StarRating,
+		StarCount:   video.StarCount,
 		ChannelID:   channelID,
 	}
 }

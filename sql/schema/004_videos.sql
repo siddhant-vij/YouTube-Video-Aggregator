@@ -10,7 +10,7 @@ CREATE TABLE videos (
   published_at TIMESTAMP NOT NULL,
   url VARCHAR(255) NOT NULL UNIQUE,
   view_count VARCHAR(10) NOT NULL,
-  star_rating DECIMAL NOT NULL,
+  star_rating VARCHAR(10) NOT NULL,
   star_count VARCHAR(10) NOT NULL,
   channel_id TEXT NOT NULL REFERENCES channels(id) ON DELETE CASCADE
 );

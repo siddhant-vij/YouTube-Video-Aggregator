@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"log"
-	"net/http"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -13,7 +12,7 @@ import (
 
 	"github.com/siddhant-vij/YouTube-Video-Aggregator/config"
 	"github.com/siddhant-vij/YouTube-Video-Aggregator/database"
-	"github.com/siddhant-vij/YouTube-Video-Aggregator/utils"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/services"
 )
 
 func FetchNewVideos(config *config.ApiConfig) {
@@ -24,23 +23,18 @@ func FetchNewVideos(config *config.ApiConfig) {
 	}
 	config.Mutex.RUnlock()
 
-	var feeds []utils.Feed
+	var channels []services.Channel
 
 	for _, channel := range channelsToFetch {
-		var ytFeedInputParams = utils.YouTubeFeedInputParams{
-			Client:         &http.Client{},
-			ChannelBaseURL: config.ChannelBaseURL,
-		}
-
-		feed, err := ytFeedInputParams.GetFeed(channel.ID, utils.FTChannel)
+		channel, err := services.GetChannelVideos(channel.ID)
 		if err != nil {
 			panic(err)
 		}
 
-		feeds = append(feeds, feed)
+		channels = append(channels, channel)
 	}
 
-	videoParams := createVideoParams(&channelsToFetch, &feeds, 5)
+	videoParams := createVideoParams(&channelsToFetch, &channels, 5)
 	insertVideos(videoParams, config)
 
 	config.Mutex.Lock()
@@ -57,7 +51,7 @@ func FetchNewVideos(config *config.ApiConfig) {
 	config.Mutex.Unlock()
 }
 
-func createVideoParams(channels *[]database.Channel, feeds *[]utils.Feed, batchSize int) []database.InsertVideoParams {
+func createVideoParams(channelsToFetch *[]database.Channel, channels *[]services.Channel, batchSize int) []database.InsertVideoParams {
 	wg := &sync.WaitGroup{}
 	ch := make(chan database.InsertVideoParams)
 	var params []database.InsertVideoParams
@@ -68,23 +62,23 @@ func createVideoParams(channels *[]database.Channel, feeds *[]utils.Feed, batchS
 		}
 	}()
 
-	validCounts := make([]int32, len(*channels))
+	validCounts := make([]int32, len(*channelsToFetch))
 
-	for cidx, channelID := range *channels {
-		for _, entry := range (*feeds)[cidx].Entries {
+	for cidx, channelID := range *channelsToFetch {
+		for _, video := range (*channels)[cidx].Videos {
 			if atomic.LoadInt32(&validCounts[cidx]) >= int32(batchSize) {
 				break
 			}
 			wg.Add(1)
-			go func(entry utils.Entry, channelId string, idx int) {
+			go func(video services.Video, channelId string, idx int) {
 				defer wg.Done()
-				param := createOneVideoParam(&entry, channelId)
+				param := createOneVideoParam(&video, channelId)
 				if param != nil {
 					if atomic.AddInt32(&validCounts[idx], 1) <= int32(batchSize) {
 						ch <- *param
 					}
 				}
-			}(entry, channelID.ID, cidx)
+			}(video, channelID.ID, cidx)
 		}
 	}
 
@@ -93,24 +87,23 @@ func createVideoParams(channels *[]database.Channel, feeds *[]utils.Feed, batchS
 	return params
 }
 
-func createOneVideoParam(entry *utils.Entry, channelID string) *database.InsertVideoParams {
-	description := string(entry.Media.Description)
-	if description == "" {
+func createOneVideoParam(video *services.Video, channelID string) *database.InsertVideoParams {
+	if video.Description == "..." || video.Description == "" {
 		return nil
 	}
 	return &database.InsertVideoParams{
 		ID:          uuid.New(),
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
-		Title:       entry.Title,
-		Description: utils.ShortenText(description),
-		ImageUrl:    entry.Media.Image.URL,
-		Authors:     entry.Author.Name,
-		PublishedAt: entry.Published,
-		Url:         entry.Link.Href,
-		ViewCount:   utils.ShortenViewCount(entry.Media.Community.Statistics.Views),
-		StarRating:  entry.Media.Community.StarRating.Average,
-		StarCount:   utils.ShortenStarCount(entry.Media.Community.StarRating.Count),
+		Title:       video.Title,
+		Description: video.Description,
+		ImageUrl:    video.ImageURL,
+		Authors:     video.Authors,
+		PublishedAt: video.PublishedAt,
+		Url:         video.URL,
+		ViewCount:   video.ViewCount,
+		StarRating:  video.StarRating,
+		StarCount:   video.StarCount,
 		ChannelID:   channelID,
 	}
 }

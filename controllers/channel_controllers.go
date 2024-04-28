@@ -3,14 +3,13 @@ package controllers
 import (
 	"context"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/siddhant-vij/YouTube-Video-Aggregator/config"
 	"github.com/siddhant-vij/YouTube-Video-Aggregator/database"
-	"github.com/siddhant-vij/YouTube-Video-Aggregator/utils"
+	"github.com/siddhant-vij/YouTube-Video-Aggregator/services"
 )
 
 func AddChannelFollowForUser(config *config.ApiConfig, userId uuid.UUID, channelId string) error {
@@ -51,12 +50,7 @@ func AddChannelAndVideos(config *config.ApiConfig, channelId string) error {
 	config.Mutex.Lock()
 	defer config.Mutex.Unlock()
 
-	var ytFeedInputParams = utils.YouTubeFeedInputParams{
-		Client:         &http.Client{},
-		ChannelBaseURL: config.ChannelBaseURL,
-	}
-
-	feed, err := ytFeedInputParams.GetFeed(channelId, utils.FTChannel)
+	channel, err := services.GetChannelVideos(channelId)
 	if err != nil {
 		panic(err)
 	}
@@ -65,8 +59,8 @@ func AddChannelAndVideos(config *config.ApiConfig, channelId string) error {
 		ID:            channelId,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
-		Name:          feed.Title,
-		Url:           feed.Link.Href,
+		Name:          channel.Name,
+		Url:           channel.URL,
 		LastFetchedAt: time.Now(),
 	}
 
@@ -75,36 +69,35 @@ func AddChannelAndVideos(config *config.ApiConfig, channelId string) error {
 		return err
 	}
 
-	videoParams := createAllVideoParams(&(feed.Entries), 5, channelId)
+	videoParams := createAllVideoParams(&(channel.Videos), 5, channelId)
 	insertAllVideos(videoParams, config)
 
 	return nil
 }
 
-func createAllVideoParams(entries *[]utils.Entry, numVideos int, channelID string) []database.InsertVideoParams {
+func createAllVideoParams(videos *[]services.Video, numVideos int, channelID string) []database.InsertVideoParams {
 	var params []database.InsertVideoParams
 	count := 0
-	for _, entry := range *entries {
+	for _, video := range *videos {
 		if count >= numVideos {
 			break
 		}
-		description := string(entry.Media.Description)
-		if description == "" {
+		if video.Description == "..." || video.Description == "" {
 			continue
 		}
 		param := database.InsertVideoParams{
 			ID:          uuid.New(),
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
-			Title:       entry.Title,
-			Description: utils.ShortenText(description),
-			ImageUrl:    entry.Media.Image.URL,
-			Authors:     entry.Author.Name,
-			PublishedAt: entry.Published,
-			Url:         entry.Link.Href,
-			ViewCount:   utils.ShortenViewCount(entry.Media.Community.Statistics.Views),
-			StarRating:  entry.Media.Community.StarRating.Average,
-			StarCount:   utils.ShortenStarCount(entry.Media.Community.StarRating.Count),
+			Title:       video.Title,
+			Description: video.Description,
+			ImageUrl:    video.ImageURL,
+			Authors:     video.Authors,
+			PublishedAt: video.PublishedAt,
+			Url:         video.URL,
+			ViewCount:   video.ViewCount,
+			StarRating:  video.StarRating,
+			StarCount:   video.StarCount,
 			ChannelID:   channelID,
 		}
 		params = append(params, param)
