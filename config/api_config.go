@@ -10,16 +10,10 @@ import (
 
 type ApiConfig struct {
 	DatabaseURL string
-
-	AuthServerPort     string
-	AuthVerifyEndpoint string
-
+	VerifyEndpoint string
 	ResourceServerPort string
-
 	ChannelBaseURL string
-
 	DBQueries *database.Queries
 	Mutex     *sync.RWMutex
-
 	UserId uuid.UUID
 }

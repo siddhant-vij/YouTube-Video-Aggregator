@@ -19,9 +19,8 @@ func AuthMiddleware(next http.Handler, config *config.ApiConfig) http.Handler {
 			return
 		}
 
-		port := config.AuthServerPort
-		endpoint := config.AuthVerifyEndpoint
-		req, err := http.NewRequest("GET", "http://localhost:"+port+endpoint, nil)
+		endpoint := config.VerifyEndpoint
+		req, err := http.NewRequest("GET", endpoint, nil)
 		if err != nil {
 			log.Println(err)
 			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())

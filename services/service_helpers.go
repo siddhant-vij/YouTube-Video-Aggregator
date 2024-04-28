@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -74,10 +73,7 @@ func GetChannelVideos(channelID string) (Channel, error) {
 		for _, apiKey := range apiKeys {
 			ytChannel, err := api.GetYtApiChannel(apiKey, channelID)
 			if err != nil {
-				if strings.Contains(err.Error(), "quota exhausted") {
-					continue
-				}
-				return Channel{}, err
+				continue
 			}
 			return convertYtToChannel(&ytChannel), nil
 		}
