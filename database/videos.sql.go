@@ -83,12 +83,21 @@ func (q *Queries) GetStatsForURL(ctx context.Context, url string) (GetStatsForUR
 }
 
 const getUserVideos = `-- name: GetUserVideos :many
-SELECT videos.id, videos.created_at, videos.updated_at, videos.title, videos.description, videos.image_url, videos.authors, videos.published_at, videos.url, videos.view_count, videos.star_rating, videos.star_count, videos.channel_id FROM videos
-JOIN channel_follows
-ON videos.channel_id = channel_follows.channel_id
-WHERE channel_follows.user_id = $1
-ORDER BY videos.published_at DESC
-LIMIT $2
+SELECT v.id, v.created_at, v.updated_at, v.title, v.description, v.image_url, v.authors, v.published_at, v.url, v.view_count, v.star_rating, v.star_count, v.channel_id,
+  EXISTS(
+    SELECT 1 FROM bookmarks
+    WHERE bookmarks.video_id = v.id
+      AND bookmarks.user_id = $1
+  ) AS bookmark_status
+FROM (
+  SELECT id, created_at, updated_at, title, description, image_url, authors, published_at, url, view_count, star_rating, star_count, channel_id FROM videos
+  WHERE channel_id IN (
+    SELECT channel_id FROM channel_follows
+    WHERE user_id = $1
+  )
+  ORDER BY published_at DESC
+  LIMIT $2
+) v
 `
 
 type GetUserVideosParams struct {
@@ -96,15 +105,32 @@ type GetUserVideosParams struct {
 	Limit  int32
 }
 
-func (q *Queries) GetUserVideos(ctx context.Context, arg GetUserVideosParams) ([]Video, error) {
+type GetUserVideosRow struct {
+	ID             uuid.UUID
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Title          string
+	Description    string
+	ImageUrl       string
+	Authors        string
+	PublishedAt    time.Time
+	Url            string
+	ViewCount      string
+	StarRating     string
+	StarCount      string
+	ChannelID      string
+	BookmarkStatus bool
+}
+
+func (q *Queries) GetUserVideos(ctx context.Context, arg GetUserVideosParams) ([]GetUserVideosRow, error) {
 	rows, err := q.db.QueryContext(ctx, getUserVideos, arg.UserID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Video
+	var items []GetUserVideosRow
 	for rows.Next() {
-		var i Video
+		var i GetUserVideosRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
@@ -119,6 +145,7 @@ func (q *Queries) GetUserVideos(ctx context.Context, arg GetUserVideosParams) ([
 			&i.StarRating,
 			&i.StarCount,
 			&i.ChannelID,
+			&i.BookmarkStatus,
 		); err != nil {
 			return nil, err
 		}

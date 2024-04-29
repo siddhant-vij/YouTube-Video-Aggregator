@@ -9,11 +9,11 @@ import (
 )
 
 type ApiConfig struct {
-	DatabaseURL string
-	VerifyEndpoint string
+	DatabaseURL        string
+	VerifyEndpoint     string
 	ResourceServerPort string
-	ChannelBaseURL string
-	DBQueries *database.Queries
-	Mutex     *sync.RWMutex
-	UserId uuid.UUID
+	ChannelBaseURL     string
+	DBQueries          *database.Queries
+	Mutex              *sync.RWMutex
+	UserId             uuid.UUID
 }

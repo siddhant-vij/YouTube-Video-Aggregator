@@ -15,14 +15,14 @@ import (
 	"github.com/siddhant-vij/YouTube-Video-Aggregator/services"
 )
 
-type InitDB struct {
+type JSONChannelList struct {
 	Channels []struct {
 		ChannelID string `json:"channelId"`
 	} `json:"channels"`
 }
 
 func InitializeDB(config *ApiConfig) {
-	var channelIDs = InitDB{}
+	var channelIDs = JSONChannelList{}
 	jsonFile, err := os.Open("../init_db.json")
 	if err != nil {
 		log.Fatal(err)
@@ -53,7 +53,7 @@ func InitializeDB(config *ApiConfig) {
 	log.Println("Database Initialized!")
 }
 
-func createAllChannelParams(initDb *InitDB, channels *[]services.Channel) []database.InsertChannelParams {
+func createAllChannelParams(channelList *JSONChannelList, channels *[]services.Channel) []database.InsertChannelParams {
 	wg := &sync.WaitGroup{}
 	ch := make(chan database.InsertChannelParams)
 	var params []database.InsertChannelParams
@@ -64,7 +64,7 @@ func createAllChannelParams(initDb *InitDB, channels *[]services.Channel) []data
 		}
 	}()
 
-	for idx, channelID := range initDb.Channels {
+	for idx, channelID := range channelList.Channels {
 		wg.Add(1)
 		go createOneChannelParams(&(*channels)[idx], channelID.ChannelID, wg, ch)
 	}
@@ -108,7 +108,7 @@ func insertOneChannel(param database.InsertChannelParams, config *ApiConfig, wg 
 	}
 }
 
-func createAllVideoParams(initDb *InitDB, channels *[]services.Channel, numVideosPerChannel int) []database.InsertVideoParams {
+func createAllVideoParams(channelList *JSONChannelList, channels *[]services.Channel, numVideosPerChannel int) []database.InsertVideoParams {
 	wg := &sync.WaitGroup{}
 	ch := make(chan database.InsertVideoParams)
 	var params []database.InsertVideoParams
@@ -119,9 +119,9 @@ func createAllVideoParams(initDb *InitDB, channels *[]services.Channel, numVideo
 		}
 	}()
 
-	validCounts := make([]int32, len(initDb.Channels))
+	validCounts := make([]int32, len(channelList.Channels))
 
-	for cidx, channelID := range initDb.Channels {
+	for cidx, channelID := range channelList.Channels {
 		for _, video := range (*channels)[cidx].Videos {
 			if atomic.LoadInt32(&validCounts[cidx]) >= int32(numVideosPerChannel) {
 				break

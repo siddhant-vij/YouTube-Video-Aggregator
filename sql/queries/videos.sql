@@ -8,12 +8,21 @@ VALUES
 SELECT * FROM videos;
 
 -- name: GetUserVideos :many
-SELECT videos.* FROM videos
-JOIN channel_follows
-ON videos.channel_id = channel_follows.channel_id
-WHERE channel_follows.user_id = $1
-ORDER BY videos.published_at DESC
-LIMIT $2;
+SELECT v.*,
+  EXISTS(
+    SELECT 1 FROM bookmarks
+    WHERE bookmarks.video_id = v.id
+      AND bookmarks.user_id = $1
+  ) AS bookmark_status
+FROM (
+  SELECT * FROM videos
+  WHERE channel_id IN (
+    SELECT channel_id FROM channel_follows
+    WHERE user_id = $1
+  )
+  ORDER BY published_at DESC
+  LIMIT $2
+) v;
 
 -- name: GetStatsForURL :one
 SELECT view_count, star_rating, star_count

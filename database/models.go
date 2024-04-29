@@ -10,6 +10,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type Bookmark struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	UserID    uuid.UUID
+	VideoID   uuid.UUID
+}
+
 type Channel struct {
 	ID            string
 	CreatedAt     time.Time

@@ -11,7 +11,7 @@ import (
 )
 
 type ResponseForUser struct {
-	Videos           []database.Video
+	Videos           []database.GetUserVideosRow
 	ChannelsFollowed []database.Channel
 	OtherChannels    []database.Channel
 }
@@ -66,7 +66,7 @@ func getNumChannels(config *config.ApiConfig, numChannels int32) ([]database.Cha
 	return channels, nil
 }
 
-func GetResponseVideosForUser(config *config.ApiConfig, userId uuid.UUID, numVideos int32) ([]database.Video, error) {
+func GetResponseVideosForUser(config *config.ApiConfig, userId uuid.UUID, numVideos int32) ([]database.GetUserVideosRow, error) {
 	config.Mutex.RLock()
 	defer config.Mutex.RUnlock()
 
