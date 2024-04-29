@@ -3,6 +3,7 @@
 Building an aggregator service in Go. It's a backend web server which allows a user to:
 - Follow 5 YouTube channels by default (on successful login)
 - Follow and unfollow channels that other users have added
+- Add bookmarks and upvote/downvote to the video posts
 - Fetch all of the latest videos from the channels they follow
 
 <br>
@@ -35,7 +36,6 @@ RSS/Atom feeds are a way for websites to publish updates to their content. You c
 - Add a CLI client that uses the API to fetch and display posts, maybe it even allows you to read them in your terminal
 - Scrape lists of feeds themselves from a third-party site that aggregates feed URLs (e.g. FeedSpot, etc.)
 - Add integration tests that use the API to create, read, update, and delete feeds and posts
-- Add bookmarking or "liking" to posts
 - Create a comprehensive web UI that uses the backend API
 
 <br>
