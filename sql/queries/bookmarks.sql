@@ -7,9 +7,12 @@ VALUES
 -- name: GetAllBookmarks :many
 SELECT * FROM bookmarks;
 
--- name: GetVideoIdsBookmarkedByUser :many
-SELECT video_id FROM bookmarks
-WHERE user_id = $1;
+-- name: GetVideosBookmarkedByUser :many
+SELECT videos.*, TRUE AS bookmark_status
+FROM bookmarks
+JOIN videos
+ON bookmarks.video_id = videos.id
+WHERE bookmarks.user_id = $1;
 
 -- name: DeleteBookmark :exec
 DELETE FROM bookmarks

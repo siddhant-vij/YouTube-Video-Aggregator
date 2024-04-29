@@ -60,24 +60,59 @@ func (q *Queries) GetAllBookmarks(ctx context.Context) ([]Bookmark, error) {
 	return items, nil
 }
 
-const getVideoIdsBookmarkedByUser = `-- name: GetVideoIdsBookmarkedByUser :many
-SELECT video_id FROM bookmarks
-WHERE user_id = $1
+const getVideosBookmarkedByUser = `-- name: GetVideosBookmarkedByUser :many
+SELECT videos.id, videos.created_at, videos.updated_at, videos.title, videos.description, videos.image_url, videos.authors, videos.published_at, videos.url, videos.view_count, videos.star_rating, videos.star_count, videos.channel_id, TRUE AS bookmark_status
+FROM bookmarks
+JOIN videos
+ON bookmarks.video_id = videos.id
+WHERE bookmarks.user_id = $1
 `
 
-func (q *Queries) GetVideoIdsBookmarkedByUser(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
-	rows, err := q.db.QueryContext(ctx, getVideoIdsBookmarkedByUser, userID)
+type GetVideosBookmarkedByUserRow struct {
+	ID             uuid.UUID
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Title          string
+	Description    string
+	ImageUrl       string
+	Authors        string
+	PublishedAt    time.Time
+	Url            string
+	ViewCount      string
+	StarRating     string
+	StarCount      string
+	ChannelID      string
+	BookmarkStatus bool
+}
+
+func (q *Queries) GetVideosBookmarkedByUser(ctx context.Context, userID uuid.UUID) ([]GetVideosBookmarkedByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getVideosBookmarkedByUser, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []uuid.UUID
+	var items []GetVideosBookmarkedByUserRow
 	for rows.Next() {
-		var video_id uuid.UUID
-		if err := rows.Scan(&video_id); err != nil {
+		var i GetVideosBookmarkedByUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Title,
+			&i.Description,
+			&i.ImageUrl,
+			&i.Authors,
+			&i.PublishedAt,
+			&i.Url,
+			&i.ViewCount,
+			&i.StarRating,
+			&i.StarCount,
+			&i.ChannelID,
+			&i.BookmarkStatus,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, video_id)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

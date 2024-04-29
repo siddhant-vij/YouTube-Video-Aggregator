@@ -17,7 +17,7 @@ func FollowChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseForUser, err := controllers.GenerateReponseForUser(apiConfig, userId, 10, 50)
+	responseForUser, err := controllers.GenerateResponseForUser(apiConfig, userId, 10, 50)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -35,7 +35,7 @@ func UnfollowChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseForUser, err := controllers.GenerateReponseForUser(apiConfig, userId, 10, 50)
+	responseForUser, err := controllers.GenerateResponseForUser(apiConfig, userId, 10, 50)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -58,7 +58,7 @@ func AddNewChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseForUser, err := controllers.GenerateReponseForUser(apiConfig, userId, 10, 50)
+	responseForUser, err := controllers.GenerateResponseForUser(apiConfig, userId, 10, 50)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return

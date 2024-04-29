@@ -10,7 +10,7 @@ import (
 	"github.com/siddhant-vij/YouTube-Video-Aggregator/database"
 )
 
-type ResponseForUser struct {
+type FullResponseForUser struct {
 	Videos           []database.GetUserVideosRow
 	ChannelsFollowed []database.Channel
 	OtherChannels    []database.Channel
@@ -107,20 +107,20 @@ func GetNotYetFollowedChannelsForUser(config *config.ApiConfig, userId uuid.UUID
 	return channels, nil
 }
 
-func GenerateReponseForUser(config *config.ApiConfig, userId uuid.UUID, numFollowChannels, numVideos int32) (ResponseForUser, error) {
+func GenerateResponseForUser(config *config.ApiConfig, userId uuid.UUID, numFollowChannels, numVideos int32) (FullResponseForUser, error) {
 	channelFollows, err := GetAllChannelFollowsForUser(config, userId)
 	if err != nil {
-		return ResponseForUser{}, err
+		return FullResponseForUser{}, err
 	}
 	if len(channelFollows) == 0 {
 		InsertNumFollowsForUser(config, userId, numFollowChannels)
 	}
 	videos, err := GetResponseVideosForUser(config, userId, numVideos)
 	if err != nil {
-		return ResponseForUser{}, err
+		return FullResponseForUser{}, err
 	}
 
-	response := ResponseForUser{}
+	response := FullResponseForUser{}
 	response.Videos = videos
 	response.ChannelsFollowed, _ = GetFollowedChannelsForUser(config, userId)
 	response.OtherChannels, _ = GetNotYetFollowedChannelsForUser(config, userId)

@@ -39,13 +39,19 @@ func RegisterRoutes(mux *http.ServeMux) {
 	go executeFetchCronJob()
 	go executeDeleteCronJob()
 
-	mux.Handle("/", middlewares.AuthMiddleware(http.HandlerFunc(GenerateReponse), apiConfig))
+	mux.Handle("/", middlewares.AuthMiddleware(http.HandlerFunc(GenerateResponse), apiConfig))
 
-	mux.Handle("/refresh", middlewares.AuthMiddleware(http.HandlerFunc(GenerateReponse), apiConfig))
+	mux.Handle("/refresh", middlewares.AuthMiddleware(http.HandlerFunc(GenerateResponse), apiConfig))
 
 	mux.Handle("/follow/{channel_id}", middlewares.AuthMiddleware(http.HandlerFunc(FollowChannel), apiConfig))
 
 	mux.Handle("/unfollow/{channel_id}", middlewares.AuthMiddleware(http.HandlerFunc(UnfollowChannel), apiConfig))
 
 	mux.Handle("/addNewChannel/{channel_id}", middlewares.AuthMiddleware(http.HandlerFunc(AddNewChannel), apiConfig))
+
+	mux.Handle("/addBookmark/{video_id}", middlewares.AuthMiddleware(http.HandlerFunc(AddBookmark), apiConfig))
+
+	mux.Handle("/removeBookmark/{video_id}", middlewares.AuthMiddleware(http.HandlerFunc(RemoveBookmark), apiConfig))
+
+	mux.Handle("/getBookmarkedVideos", middlewares.AuthMiddleware(http.HandlerFunc(GetBookmarkedVideos), apiConfig))
 }

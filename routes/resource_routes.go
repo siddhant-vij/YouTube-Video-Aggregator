@@ -7,10 +7,10 @@ import (
 	"github.com/siddhant-vij/YouTube-Video-Aggregator/utils"
 )
 
-func GenerateReponse(w http.ResponseWriter, r *http.Request) {
+func GenerateResponse(w http.ResponseWriter, r *http.Request) {
 	userId := apiConfig.UserId
 
-	responseForUser, err := controllers.GenerateReponseForUser(apiConfig, userId, 10, 50)
+	responseForUser, err := controllers.GenerateResponseForUser(apiConfig, userId, 10, 50)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
