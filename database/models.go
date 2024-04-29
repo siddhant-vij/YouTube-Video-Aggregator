@@ -48,5 +48,6 @@ type Video struct {
 	ViewCount   string
 	StarRating  string
 	StarCount   string
+	VoteCount   int32
 	ChannelID   string
 }

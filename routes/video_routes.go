@@ -40,3 +40,23 @@ func GetBookmarkedVideos(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.RespondWithJSON(w, http.StatusOK, responseForUser)
 }
+
+func Upvote(w http.ResponseWriter, r *http.Request) {
+	videoId := uuid.MustParse(r.PathValue("video_id"))
+	updated, err := controllers.UpvoteVideoByVideoId(apiConfig, videoId)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	utils.RespondWithJSON(w, http.StatusOK, updated)
+}
+
+func Downvote(w http.ResponseWriter, r *http.Request) {
+	videoId := uuid.MustParse(r.PathValue("video_id"))
+	updated, err := controllers.DownvoteVideoByVideoId(apiConfig, videoId)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	utils.RespondWithJSON(w, http.StatusOK, updated)
+}

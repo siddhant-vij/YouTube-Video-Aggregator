@@ -22,8 +22,20 @@ func (q *Queries) DeleteOldVideos(ctx context.Context) error {
 	return err
 }
 
+const downvoteVideo = `-- name: DownvoteVideo :exec
+UPDATE videos
+SET
+  vote_count = vote_count - 1
+WHERE id = $1
+`
+
+func (q *Queries) DownvoteVideo(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, downvoteVideo, id)
+	return err
+}
+
 const getAllVideos = `-- name: GetAllVideos :many
-SELECT id, created_at, updated_at, title, description, image_url, authors, published_at, url, view_count, star_rating, star_count, channel_id FROM videos
+SELECT id, created_at, updated_at, title, description, image_url, authors, published_at, url, view_count, star_rating, star_count, vote_count, channel_id FROM videos
 `
 
 func (q *Queries) GetAllVideos(ctx context.Context) ([]Video, error) {
@@ -48,6 +60,7 @@ func (q *Queries) GetAllVideos(ctx context.Context) ([]Video, error) {
 			&i.ViewCount,
 			&i.StarRating,
 			&i.StarCount,
+			&i.VoteCount,
 			&i.ChannelID,
 		); err != nil {
 			return nil, err
@@ -83,19 +96,23 @@ func (q *Queries) GetStatsForURL(ctx context.Context, url string) (GetStatsForUR
 }
 
 const getUserVideos = `-- name: GetUserVideos :many
-SELECT v.id, v.created_at, v.updated_at, v.title, v.description, v.image_url, v.authors, v.published_at, v.url, v.view_count, v.star_rating, v.star_count, v.channel_id,
+SELECT v.id, v.created_at, v.updated_at, v.title, v.description, v.image_url, v.authors, v.published_at, v.url, v.view_count, v.star_rating, v.star_count, v.vote_count, v.channel_id,
   EXISTS(
     SELECT 1 FROM bookmarks
     WHERE bookmarks.video_id = v.id
       AND bookmarks.user_id = $1
   ) AS bookmark_status
 FROM (
-  SELECT id, created_at, updated_at, title, description, image_url, authors, published_at, url, view_count, star_rating, star_count, channel_id FROM videos
+  SELECT id, created_at, updated_at, title, description, image_url, authors, published_at, url, view_count, star_rating, star_count, vote_count, channel_id FROM videos
   WHERE channel_id IN (
     SELECT channel_id FROM channel_follows
     WHERE user_id = $1
   )
-  ORDER BY published_at DESC
+  ORDER BY DATE(published_at) DESC,
+    vote_count DESC,
+    view_count DESC,
+    star_count DESC,
+    star_rating DESC
   LIMIT $2
 ) v
 `
@@ -118,6 +135,7 @@ type GetUserVideosRow struct {
 	ViewCount      string
 	StarRating     string
 	StarCount      string
+	VoteCount      int32
 	ChannelID      string
 	BookmarkStatus bool
 }
@@ -144,6 +162,7 @@ func (q *Queries) GetUserVideos(ctx context.Context, arg GetUserVideosParams) ([
 			&i.ViewCount,
 			&i.StarRating,
 			&i.StarCount,
+			&i.VoteCount,
 			&i.ChannelID,
 			&i.BookmarkStatus,
 		); err != nil {
@@ -162,9 +181,9 @@ func (q *Queries) GetUserVideos(ctx context.Context, arg GetUserVideosParams) ([
 
 const insertVideo = `-- name: InsertVideo :exec
 INSERT INTO videos
-  (id, created_at, updated_at, title, description, image_url, authors, published_at, url, view_count, star_rating, star_count, channel_id)
+  (id, created_at, updated_at, title, description, image_url, authors, published_at, url, view_count, star_rating, star_count, vote_count, channel_id)
 VALUES
-  ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+  ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 `
 
 type InsertVideoParams struct {
@@ -180,6 +199,7 @@ type InsertVideoParams struct {
 	ViewCount   string
 	StarRating  string
 	StarCount   string
+	VoteCount   int32
 	ChannelID   string
 }
 
@@ -197,6 +217,7 @@ func (q *Queries) InsertVideo(ctx context.Context, arg InsertVideoParams) error 
 		arg.ViewCount,
 		arg.StarRating,
 		arg.StarCount,
+		arg.VoteCount,
 		arg.ChannelID,
 	)
 	return err
@@ -225,5 +246,17 @@ func (q *Queries) UpdateStatsForURL(ctx context.Context, arg UpdateStatsForURLPa
 		arg.StarRating,
 		arg.StarCount,
 	)
+	return err
+}
+
+const upvoteVideo = `-- name: UpvoteVideo :exec
+UPDATE videos
+SET
+  vote_count = vote_count + 1
+WHERE id = $1
+`
+
+func (q *Queries) UpvoteVideo(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, upvoteVideo, id)
 	return err
 }

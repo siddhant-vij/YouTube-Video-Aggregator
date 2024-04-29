@@ -64,3 +64,25 @@ func GetBookmarkedVideosForUser(config *config.ApiConfig, userId uuid.UUID) (Boo
 	response.OtherChannels, _ = GetNotYetFollowedChannelsForUser(config, userId)
 	return response, nil
 }
+
+func UpvoteVideoByVideoId(config *config.ApiConfig, videoId uuid.UUID) (bool, error) {
+	config.Mutex.Lock()
+	defer config.Mutex.Unlock()
+
+	err := config.DBQueries.UpvoteVideo(context.TODO(), videoId)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func DownvoteVideoByVideoId(config *config.ApiConfig, videoId uuid.UUID) (bool, error) {
+	config.Mutex.Lock()
+	defer config.Mutex.Unlock()
+
+	err := config.DBQueries.DownvoteVideo(context.TODO(), videoId)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}

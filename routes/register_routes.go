@@ -54,4 +54,8 @@ func RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("/removeBookmark/{video_id}", middlewares.AuthMiddleware(http.HandlerFunc(RemoveBookmark), apiConfig))
 
 	mux.Handle("/getBookmarkedVideos", middlewares.AuthMiddleware(http.HandlerFunc(GetBookmarkedVideos), apiConfig))
+
+	mux.Handle("/upvote/{video_id}", middlewares.AuthMiddleware(http.HandlerFunc(Upvote), apiConfig))
+
+	mux.Handle("/downvote/{video_id}", middlewares.AuthMiddleware(http.HandlerFunc(Downvote), apiConfig))
 }

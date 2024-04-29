@@ -12,6 +12,7 @@ CREATE TABLE videos (
   view_count VARCHAR(10) NOT NULL,
   star_rating VARCHAR(10) NOT NULL,
   star_count VARCHAR(10) NOT NULL,
+  vote_count INTEGER NOT NULL DEFAULT 0,
   channel_id TEXT NOT NULL REFERENCES channels(id) ON DELETE CASCADE
 );
 

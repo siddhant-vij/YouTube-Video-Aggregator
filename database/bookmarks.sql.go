@@ -61,11 +61,16 @@ func (q *Queries) GetAllBookmarks(ctx context.Context) ([]Bookmark, error) {
 }
 
 const getVideosBookmarkedByUser = `-- name: GetVideosBookmarkedByUser :many
-SELECT videos.id, videos.created_at, videos.updated_at, videos.title, videos.description, videos.image_url, videos.authors, videos.published_at, videos.url, videos.view_count, videos.star_rating, videos.star_count, videos.channel_id, TRUE AS bookmark_status
+SELECT videos.id, videos.created_at, videos.updated_at, videos.title, videos.description, videos.image_url, videos.authors, videos.published_at, videos.url, videos.view_count, videos.star_rating, videos.star_count, videos.vote_count, videos.channel_id, TRUE AS bookmark_status
 FROM bookmarks
 JOIN videos
 ON bookmarks.video_id = videos.id
 WHERE bookmarks.user_id = $1
+ORDER BY DATE(published_at) DESC,
+  vote_count DESC,
+  view_count DESC,
+  star_count DESC,
+  star_rating DESC
 `
 
 type GetVideosBookmarkedByUserRow struct {
@@ -81,6 +86,7 @@ type GetVideosBookmarkedByUserRow struct {
 	ViewCount      string
 	StarRating     string
 	StarCount      string
+	VoteCount      int32
 	ChannelID      string
 	BookmarkStatus bool
 }
@@ -107,6 +113,7 @@ func (q *Queries) GetVideosBookmarkedByUser(ctx context.Context, userID uuid.UUI
 			&i.ViewCount,
 			&i.StarRating,
 			&i.StarCount,
+			&i.VoteCount,
 			&i.ChannelID,
 			&i.BookmarkStatus,
 		); err != nil {
