@@ -16,4 +16,9 @@ type ApiConfig struct {
 	DBQueries          *database.Queries
 	Mutex              *sync.RWMutex
 	UserId             uuid.UUID
+	AuthStatus         string
+}
+
+func (config *ApiConfig) GetAuthStatus() string {
+	return config.AuthStatus
 }
