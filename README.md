@@ -9,13 +9,11 @@ Building an aggregator service in Go. It's a backend web server which allows a u
 <br>
 
 - [JWT Authentication Service](https://github.com/siddhant-vij/JWT-Authentication-Service) to securely login users on the website.
-- [Dynamic Feed Generator](https://github.com/siddhant-vij/Dynamic-Feed-Generator) using Go's template engine to display the videos.
 
 <br>
 
 RSS/Atom feeds are a way for websites to publish updates to their content. You can use this project to keep up with your favorite youtube channels!
 
-[Boot.dev](https://www.boot.dev/learn/build-blog-aggregator) Guided Project
 
 <br>
 
@@ -24,7 +22,6 @@ RSS/Atom feeds are a way for websites to publish updates to their content. You c
 - The basics of database migrations
 - Long-running service workers
 - The complete overview of JWT authentication
-- Dynamic feed generator using the backend API
 
 <br>
 
