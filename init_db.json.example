@@ -10,7 +10,8 @@ Here's how to obtain the YouTube Channel ID:
 - Open the YouTube channel in Chrome
 - Ctrl + Shift + I
 - Open "Console" and type the following command in the console:
-  console.log(ytInitialData.metadata.channelMetadataRenderer.externalId)
+  console.log(ytInitialPlayerResponse.videoDetails.channelId)
 - The result will be something like "UCBJycsmduvYEL83R_U4JriQ" for Marques Brownlee.
 
-*** This works as of April end, 2024.
+*** This works as of Jun end, 2024.
+*** Just update this out of the blue. Keep this updated!
